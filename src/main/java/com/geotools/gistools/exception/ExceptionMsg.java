@@ -3,7 +3,7 @@ package com.geotools.gistools.exception;
 /**
  * 功能描述：
  *
- * @Author: ddw
+ * @Author: jdy
  * @Date: 2021/5/12 10:21
  */
 public class ExceptionMsg extends Exception {

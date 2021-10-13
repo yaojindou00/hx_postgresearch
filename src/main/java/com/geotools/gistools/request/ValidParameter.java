@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * 功能描述：
  *
- * @Author: ddw
+ * @Author: jdy
  * @Date: 2021/5/12 10:18
  */
 public abstract class ValidParameter implements Serializable {

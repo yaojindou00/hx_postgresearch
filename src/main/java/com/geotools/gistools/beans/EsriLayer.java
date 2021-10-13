@@ -2,7 +2,9 @@ package com.geotools.gistools.beans;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -13,17 +15,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * @Date: 2021/5/12 10:06
  */
 @JsonIgnoreProperties(value = {"transportOrders"})
-public class
-Features implements Serializable {
+public class EsriLayer implements Serializable {
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	/**
      * 图层名称
      */
     private String layerName = null;
-
+    private String displayFieldName= "NAME";
+    private String geometryType;
+    private Map<String, Object> spatialReference;
     /**
      * 返回记录
      */
-    private List<CallbackAbleFeature> features = new ArrayList<CallbackAbleFeature>();
+    private List<EsriFeature> features = new ArrayList<EsriFeature>();
     /**
      * 图层字段列表
      */
@@ -36,10 +43,7 @@ Features implements Serializable {
      * 最大返回记录数
      */
     private int maxRecordCount = 100000;
-    /**
-     * 是否达到最大记录数
-     */
-    private boolean isMax = false;
+  
 
     public String getLayerName() {
         return layerName;
@@ -49,11 +53,11 @@ Features implements Serializable {
         this.layerName = layerName;
     }
 
-    public List<CallbackAbleFeature> getFeatures() {
+    public List<EsriFeature> getFeatures() {
         return features;
     }
 
-    public void setFeatures(List<CallbackAbleFeature> features) {
+    public void setFeatures(List<EsriFeature> features) {
         this.features = features;
     }
 
@@ -65,13 +69,7 @@ Features implements Serializable {
         this.maxRecordCount = maxRecordCount;
     }
 
-    public boolean isMax() {
-        return isMax;
-    }
-
-    public void setMax(boolean isMax) {
-        this.isMax = isMax;
-    }
+   
 
     public int getAllCount() {
         return allCount;
@@ -81,7 +79,7 @@ Features implements Serializable {
         this.allCount = allCount;
     }
 
-    public void addFeature(CallbackAbleFeature feat) {
+    public void addFeature(EsriFeature feat) {
         this.features.add(feat);
     }
 
@@ -97,10 +95,38 @@ Features implements Serializable {
         this.fields = fields;
     }
 
-    @Override
+    
+    public String getDisplayFieldName() {
+		return displayFieldName;
+	}
+
+	public void setDisplayFieldName(String displayFieldName) {
+		this.displayFieldName = displayFieldName;
+	}
+
+	public String getGeometryType() {
+		return geometryType;
+	}
+
+	public void setGeometryType(String geometryType) {
+		this.geometryType = geometryType;
+	}
+
+	public Map<String, Object> getSpatialReference() {
+		return spatialReference;
+	}
+
+	public void setSpatialReference(int srid) {
+		Map<String, Object> spatialReference =new HashMap<String, Object>();
+		spatialReference.put("latestWkid", srid);
+		spatialReference.put("wkid", srid);
+		this.spatialReference = spatialReference;
+	}
+
+	@Override
     public String toString() {
         return "Features [layerName=" + layerName + ", features=" + features + ", fields=" + fields + ", allCount="
-                + allCount + ", maxRecordCount=" + maxRecordCount + ", isMax=" + isMax + "]";
+                + allCount + ", maxRecordCount=" + maxRecordCount + "]";
     }
 
 }

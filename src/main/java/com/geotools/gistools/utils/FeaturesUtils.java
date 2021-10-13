@@ -12,7 +12,7 @@ import org.springframework.context.annotation.ScopeMetadata;
 /**
  * 功能描述：
  *
- * @Author: ddw
+ * @Author: jdy
  * @Date: 2021/5/24 11:10
  */
 public class FeaturesUtils {

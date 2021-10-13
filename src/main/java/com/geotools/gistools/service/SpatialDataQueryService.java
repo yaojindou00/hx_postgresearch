@@ -8,6 +8,7 @@ import com.geotools.gistools.mapper.CommonMapper;
 import com.geotools.gistools.request.QueryParam;
 import com.geotools.gistools.request.QueryParameter;
 import com.geotools.gistools.request.RoadAnalysisParam;
+import com.google.gson.Gson;
 
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
@@ -75,13 +76,16 @@ public class SpatialDataQueryService   {
              CallbackAbleFeature callbackAbleFeature = new CallbackAbleFeature();
              //获取几何信息
              String wkt = map.get("geom").toString();
-             callbackAbleFeature.setGeoJson(wkt);
+             Gson gson = new Gson();
+             Map<String, Object> geomap = new HashMap<String, Object>();
+             geomap = gson.fromJson(wkt, map.getClass());
+             callbackAbleFeature.setGeometry(geomap);
              //生成属性
              HashMap<String, Object> hashMap = new HashMap<String, Object>();
              for (Field field : fields) {
                  hashMap.put(field.getName(), map.get(field.getName()));
              }
-             callbackAbleFeature.setAttributes(hashMap);
+             callbackAbleFeature.setProperties(hashMap);
 
              features.add(callbackAbleFeature);
          }
@@ -133,7 +137,10 @@ public class SpatialDataQueryService   {
                   CallbackAbleFeature callbackAbleFeature = new CallbackAbleFeature();
                   //获取几何信息
                   String wkt = map.get("geom").toString();
-                  callbackAbleFeature.setGeoJson(wkt);
+                  Gson gson = new Gson();
+                  Map<String, Object> geomap = new HashMap<String, Object>();
+                  geomap = gson.fromJson(wkt, map.getClass());
+                  callbackAbleFeature.setGeometry(geomap);
                   pFeatrues.addFeature(callbackAbleFeature);
               }
           }
@@ -161,7 +168,10 @@ public class SpatialDataQueryService   {
             CallbackAbleFeature callbackAbleFeature = new CallbackAbleFeature();
             if (queryParameter.isReturnGeometry()) {
                 String wkt = map.get("geom").toString();
-                callbackAbleFeature.setGeoJson(wkt);
+                Gson gson = new Gson();
+                Map<String, Object> geomap = new HashMap<String, Object>();
+                geomap = gson.fromJson(wkt, map.getClass());
+                callbackAbleFeature.setGeometry(geomap);
 
 
             }
@@ -171,7 +181,7 @@ public class SpatialDataQueryService   {
                 hashMap.put(field.getName(), map.get(field.getName()));
             }
 
-            callbackAbleFeature.setAttributes(hashMap);
+            callbackAbleFeature.setProperties(hashMap);
             features.add(callbackAbleFeature);
 
         }

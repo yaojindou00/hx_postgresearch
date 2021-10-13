@@ -5,7 +5,7 @@ import com.geotools.gistools.exception.ExceptionMsg;
 /**
  * 功能描述：
  *
- * @Author: ddw
+ * @Author: jdy
  * @Date: 2021/9/15 14:40
  */
 public class RoadAnalysisParam extends ValidParameter{

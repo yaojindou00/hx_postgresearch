@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 /**
  * @描述 请求数据的返回值
- * @创建人 ddw
+ * @创建人 jdy
  * @创建时间 2020/11/13
  */
 
