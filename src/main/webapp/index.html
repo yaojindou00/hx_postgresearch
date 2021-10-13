@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script src="jquery.min.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<body>
+		<script type="text/javascript">
+			var flag=true;
+//			var num=0;
+//			var list=[];
+			for (i=0;i<500;i++) {
+				
+			
+			fetch("http://113.140.66.226:33225/arcgis/rest/services/River_py/MapServer/1/query?where=(OBJECTID ="+i+ ")&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&f=pjson",{
+			  method: "get",
+			  mode: "cors",
+			  contentType: "application/json",
+			}).then((res) => {
+			  return res.json();
+			}).then(function (res) {
+				if(res.features&&res.features.length>0){
+					var map={tablename:"river_py00",list:[]};
+					res.features.forEach(item => {
+						var i=getAttribute(item.attributes)
+						if(res.geometryType==="esriGeometryPoint"){
+							i.geom="POINT("+item.geometry.x+" "+item.geometry.y+")"
+						}else if(res.geometryType==="esriGeometryPolygon"){
+							var josnString = "MULTIPOLYGON((%s))";
+            		        i.geom = josnString.replace("%s", _changePolygonOrPolylineToJSonString(item.geometry.rings));
+							
+						}else if(res.geometryType==="esriGeometryPolyline"){
+							var josnString = "MULTILINESTRING(%s)";
+            		        i.geom = josnString.replace("%s", _changePolygonOrPolylineToJSonString(item.geometry.paths));
+						}
+						map.list.push(i)
+					})
+					add(map)
+				}else{
+					return false;
+				}
+			  
+			});
+}
+const getAttribute = (attr) => {
+  var obj={}
+ var keys=Object.keys(attr)
+ 	keys.forEach(item => {
+ 		if(item==="实体名称"){
+ 			obj["stmc"]=attr[item]
+ 		}else if(item==="行政区划代码"){
+ 			
+ 			obj["xzqhdm"]=	attr[item]
+ 		}else{
+ 			obj[item.toLocaleLowerCase()]=	attr[item]
+ 		}
+		
+	})
+  return obj;
+};
+const add = (map) => {
+   $.ajax({
+        type: "post",
+        url: "http://localhost:8081/rest/insertData",
+      	data: JSON.stringify(map),
+      	contentType: "application/json",
+      	dataType: 'json',
+        success: function (result) {
+            console.log("保存成功")
+        }
+    });
+};
+const _changePolygonOrPolylineToJSonString = (rings) => {
+	var arrs = [];
+	rings.forEach((arr, i)=>{
+		var items = [];
+		arr.forEach((item, k)=>{
+			items.push(item[0] + " " + item[1]);
+		});
+		if(items.length > 0){
+			arrs.push("("+items.join(",")+")");
+		}
+	});
+	if(arrs.length > 0){
+		return arrs.join(",");
+	}
+	return "";
+}
+		</script>
+	</body>
+</html>

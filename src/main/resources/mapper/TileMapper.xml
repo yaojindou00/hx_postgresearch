@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.geotools.gistools.mapper.TileMapper">
+    <!--普通动态切片  -->
+    <select id="getSimpleTile" parameterType="com.geotools.gistools.beans.TileBox" resultType="Map">
+        SELECT
+        ST_AsMVT (tile,'points',4096,'geom') tile
+        FROM
+        (
+        SELECT
+        st_asmvtgeom (t.geom,
+        st_makeenvelope (${Xmin}, ${Ymin}, ${Xmax},${Ymax}, 4326),
+        4096,
+        0,
+        TRUE
+        ) AS geom
+        FROM
+        ${layerName} t
+        ) AS tile
+        WHERE
+        tile.geom IS NOT NULL;
+
+
+    </select>
+    <!--聚合动态切片  -->
+    <select id="getAggregationTile" parameterType="com.geotools.gistools.beans.TileBox" resultType="Map">
+        SELECT
+        ST_AsMVT (tile,'points',4096,'geom') tile
+        FROM
+        (SELECT
+        st_asmvtgeom ( t.geom,st_makeenvelope (${Xmin}, ${Ymin}, ${Xmax},${Ymax}, 4326),
+        4096,
+        0,
+        true
+        ) AS geom
+        FROM
+
+        (SELECT
+        width_bucket(st_x(geom), ${Xmin} ,${Xmax} ,${xcount}) grid_x,
+        width_bucket(st_y(geom), ${Ymin} , ${Ymax}, ${ycount}) grid_y,
+        count(*),
+        st_astext(st_centroid(st_collect(geom)))geom
+
+        from ${layerName}
+
+        where
+        st_x(geom) between ${Xmin} and ${Xmax}
+        and
+        st_y(geom) between ${Ymin} and ${Ymax}
+
+        GROUP BY grid_x,grid_y ) t
+        ) AS tile
+        WHERE
+        tile.geom IS NOT NULL
+
+    </select>
+
+</mapper>

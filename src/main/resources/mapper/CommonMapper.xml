@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.geotools.gistools.mapper.CommonMapper">
+    <!-- 查询 -->
+    <select id="search" parameterType="com.geotools.gistools.request.QueryParameter" resultType="java.util.Map">
+        select
+        <if test="isReturnGeometry=true">
+            st_asgeojson(geom) as geom,
+        </if>
+        <if test="outFields != null and outFields != ''">
+            ${outFields}
+        </if>
+        from ${layerName}
+        where 1=1
+        <if test="filter != null and filter != ''">
+            and ( ${filter} )
+        </if>
+        <if test="spatialRel=='DISJOINT' and spatialFilter!=null">
+            and ST_Disjoint(geom, ST_GeomFromText('${spatialFilter}',4326)) = true
+        </if>
+        <if test="spatialRel=='INTERSECTS' and spatialFilter!=null">
+            and ST_Intersects(geom, ST_GeomFromText('${spatialFilter}',4326)) = true
+        </if>
+        <if test="spatialRel=='TOUCHES' and spatialFilter!=null">
+            and ST_Touches(geom, ST_GeomFromText('${spatialFilter}',4326)) = true
+        </if>
+        <if test="spatialRel=='CROSSES' and spatialFilter!=null">
+            and ST_Crosses(geom, ST_GeomFromText('${spatialFilter}',4326)) = true
+        </if>
+        <if test="spatialRel=='WITHIN' and spatialFilter!=null">
+            and ST_Within(geom, ST_GeomFromText('${spatialFilter}',4326)) = true
+        </if>
+        <if test="spatialRel=='CONTAINS' and spatialFilter!=null">
+            and ST_Contains(geom, ST_GeomFromText('${spatialFilter}',4326)) = true
+        </if>
+        <if test="spatialRel=='OVERLAPS' and spatialFilter!=null">
+            and ST_Overlaps(geom, ST_GeomFromText('${spatialFilter}',4326)) = true
+        </if>
+        <if test="orderByFields != null and orderByFields != ''">
+            ${orderByFields}
+        </if>
+        <if test="limit != null and limit != -1">
+            limit ${limit}
+        </if>
+        <if test="current != null and limit != null and limit != -1">
+            OFFSET (${current}-1)*${limit}
+        </if>
+    </select>
+    <!-- 查询表字段列表 -->
+    <select id="getColumns" parameterType="String" resultType="java.util.Map">
+        SELECT COLUMN_NAME,data_type FROM INFORMATION_SCHEMA.columns WHERE TABLE_NAME=#{tablename}
+    </select>
+    <!--根据城市名或代码查询  -->
+    <select id="getDataByNameOrCode" resultType="java.util.Map">
+        select st_asgeojson(geom) as geom,
+        <if test="outFields != null and outFields != ''">
+            ${outFields}
+        </if>
+
+        from ${layerName}
+        where 1=1
+        <if test="(cityname != null and cityname != '') or (citycode != null and citycode != '')">
+            and st_intersects(geom,
+            (select t.geom from ${cityLayerName} t where 1=1
+            <if test="cityname != null and cityname != ''">
+                and t.${cityname}
+            </if>
+            <if test="citycode != null and citycode != ''">
+                and t.${citycode }
+            </if>
+
+            ))=true
+        </if>
+        <if test="where != null and where != ''">
+            and ${where}
+        </if>
+        <if test="orderByFields != null and orderByFields != ''">
+            ${orderByFields}
+        </if>
+        <if test="limit != null and limit != -1">
+            limit ${limit}
+        </if>
+        <if test="current != null and limit != null and limit != -1">
+            OFFSET (${current}-1)*${limit}
+        </if>
+    </select>
+    <!--缓冲分析  -->
+    <select id="bufferSearch" parameterType="com.geotools.gistools.request.QueryParameter" resultType="java.util.Map">
+        select
+        <if test="isReturnGeometry=true">
+            st_asgeojson(geom) as geom,
+        </if>
+        <if test="outFields != null and outFields != ''">
+            ${outFields}
+        </if>
+        from ${layerName}
+        where 1=1
+        <if test="filter != null and filter != ''">
+            and ( ${filter} )
+        </if>
+        <if test="spatialFilter!=null and buffDis!=null">
+            and ST_Intersects(geom, st_buffer(ST_GeomFromText('${spatialFilter}',4326)::geography,${buffDis})) = true
+        </if>
+
+        <if test="orderByFields != null and orderByFields != ''">
+            ${orderByFields}
+        </if>
+        <if test="limit != null and limit != -1">
+            limit ${limit}
+        </if>
+        <if test="current != null and limit != null and limit != -1">
+            OFFSET (${current}-1)*${limit}
+        </if>
+    </select>
+    <!--新增  -->
+    <insert id="insertData" parameterType="java.util.HashMap">
+        insert into ${tablename}
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <foreach collection="items" item="item" separator=",">
+                <if test="item.value != null">
+                    ${item.name}
+                </if>
+            </foreach>
+        </trim>
+        values
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <foreach collection="items" item="item" separator=",">
+                <if test="item.value != null">
+                    <choose>
+                        <when test="item.name=='geom'">
+                            ST_GeomFromText(#{item.value},4326)
+                        </when>
+                        <otherwise>
+                            #{item.value}
+                        </otherwise>
+                    </choose>
+                </if>
+            </foreach>
+        </trim>
+    </insert>
+
+    <insert id="insertDataOracle" statementType="STATEMENT">
+        DECLARE
+        REALLYBIGTEXTSTRING CLOB :='${sqlData}';
+        begin
+        <choose>
+            <when test="sqlData !=null and sqlData != ''">
+                INSERT INTO ${layerName}(${layerfields})
+                VALUES(${layerValues},sde.st_geometry(REALLYBIGTEXTSTRING,4326));
+            </when>
+            <otherwise>
+                INSERT INTO ${layerName}(${layerfields}) VALUES(${layerValues});
+            </otherwise>
+        </choose>
+        end ;
+
+    </insert>
+    <!-- 更新 -->
+    <update id="updateData" parameterType="java.util.HashMap">
+        update ${tablename}
+        <trim prefix="set" suffix="" suffixOverrides=",">
+            <foreach collection="items" item="item" separator=",">
+                <if test="item.value != null">
+                    ${item.name} =
+                    <choose>
+                        <when test="item.name=='geom'">
+                            ST_GeomFromText(#{item.value},4326)
+                        </when>
+                        <otherwise>
+                            #{item.value}
+                        </otherwise>
+                    </choose>
+                </if>
+            </foreach>
+        </trim>
+        <if test="wheres != null">
+            <where>
+                <foreach collection="wheres" item="item" separator="and">
+                    ${item.name} = #{item.value}
+                </foreach>
+            </where>
+        </if>
+    </update>
+    <!-- 删除 -->
+    <delete id="deleteData" parameterType="java.util.HashMap">
+        delete from ${tablename}
+        where ${filedid} in
+        <foreach collection="list" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+    <!-- 查询统计信息 -->
+    <select id="getGroupData" parameterType="java.lang.String" resultType="java.util.Map">
+        select
+        <if test="outFields != null and outFields != ''">
+            ${outFields},
+        </if>
+        st_asgeojson(st_centroid(t1.geom)) as geoJson,
+        (select ${type} from ${layername} t2 where st_intersects(t1.geom,t2.geom)=true) as count from ${citytablename}
+        t1
+        <!--  where t1.name=#{name} -->
+    </select>
+
+    <!-- 经纬度查询城市名 -->
+    <select id="getCityNameByLatLng" parameterType="java.lang.String" resultType="java.lang.String">
+        select ${cityname} from ${tablename} where st_intersects(geom,ST_GeomFromText('POINT(${lng} ${lat})',4326))=true
+    </select>
+    <select id="roadAnaysis" parameterType="com.geotools.gistools.request.RoadAnalysisParam" resultType="java.util.Map">
+        select st_asgeojson(geom) as geom  from pgr_fromAtoB('${layerName}',${startX},${startY},${endX},${endY})
+    </select>
+</mapper>

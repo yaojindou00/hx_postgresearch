@@ -1,0 +1,17 @@
+server:
+  port: 8081
+mybatis:
+  mapper-locations: classpath:mapper/*Mapper.xml
+spring:
+  datasource:
+#    url: jdbc:postgresql://10.61.5.60:5432/gisdb
+#     password: hxhh
+    username: postgres
+    
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/hxhh
+    password: 1234
+logging:
+  level:
+    #    com.geotools.gistools.mapper: trace
+    com.geotools.gistools.mapper: DEBUG
